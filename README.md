@@ -142,11 +142,6 @@ The worker service runs in a background thread and constantly checks for new job
   npm start
   ```
 
-  For backend:
-
-  ```bash
-  uvicorn main:app --reload
-  ```
 
 * You can also run the backend using `docker-compose` to ensure consistency across environments:
 
