@@ -149,9 +149,3 @@ The worker service runs in a background thread and constantly checks for new job
   docker-compose up --build backend
   ```
 
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
