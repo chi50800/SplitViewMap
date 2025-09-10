@@ -1,70 +1,162 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# SplitViewMap
 
-## Available Scripts
+## Getting Started with the Application
 
-In the project directory, you can run:
+This project uses **React** for the front end and **FastAPI** for the back end. It allows you to process, align, and visualize geospatial images. The backend performs operations such as **image reprojection**, **clipping**, and **alignment** based on an **Area of Interest (AOI)** provided by the user.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Prerequisites
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Before you begin, make sure you have the following installed:
 
-### `npm test`
+- Docker
+- Docker Compose
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+If you don't have them, you can install them from the official websites:
 
-### `npm run build`
+- [Docker Installation](https://docs.docker.com/get-docker/)
+- [Docker Compose Installation](https://docs.docker.com/compose/install/)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Setup and Run
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To set up and run the application, follow these steps:
 
-### `npm run eject`
+1. Clone the repository:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+    ```bash
+    git clone https://github.com/your-repository/SplitViewMap.git
+    cd SplitViewMap
+    ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+2. Build and start the containers using `docker-compose`:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+    ```bash
+    docker-compose up --build
+    ```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+   This command will:
+   - Build the Docker images for both the **UI** and **Worker**.
+   - Start the **UI** container running a React application on port `3000`.
+   - Start the **Worker** container running a FastAPI application on port `8000`.
 
-## Learn More
+3. After the containers are up, you can access:
+   - **Frontend UI**: [http://localhost:3000](http://localhost:3000)
+   - **Backend API**: [http://localhost:8000](http://localhost:8000)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## API Endpoints
 
-### Code Splitting
+### 1. **Create a New Job** (`POST /create-clip`)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+This endpoint is used to create a new job for aligning two raster images based on a specified **Area of Interest (AOI)**.
 
-### Analyzing the Bundle Size
+**Request Body**:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- `image_a` and `image_b`: The images to align (should be in `.tif` format).
+- `aoi`: A string containing a **JSON object** representing the Area of Interest, which should include bounds in **latitude/longitude** coordinates.
 
-### Making a Progressive Web App
+**Example Payload**:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```json
+{
+  "aoi": "{\"type\": \"rectangle\", \"bounds\": {\"_southWest\": {\"lat\": 10, \"lng\": 20}, \"_northEast\": {\"lat\": 30, \"lng\": 40}}}"
+}
+````
 
-### Advanced Configuration
+**Response**:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```json
+{
+  "job_id": "1234-5678-91011",
+  "status": "pending"
+}
+```
 
-### Deployment
+### 2. **Get Job Status** (`GET /jobs/{job_id}`)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+This endpoint retrieves the status and results of a previously created job.
 
-### `npm run build` fails to minify
+**Request URL**: `/jobs/{job_id}`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Response**:
+
+```json
+{
+  "status": "done",
+  "image_a": "http://127.0.0.1:8000/output/1234-5678-91011/A_clipped.tif",
+  "image_b": "http://127.0.0.1:8000/output/1234-5678-91011/B_clipped_aligned.tif"
+}
+```
+
+### 3. **Download Output Images**
+
+After a job is completed, the resulting aligned images can be accessed by the URLs provided in the `GET /jobs/{job_id}` response.
+
+---
+
+## Explanation of Image Alignment
+
+### **Image Reprojection**:
+
+* **Reprojection** is the process of converting the image from its current coordinate reference system (CRS) into **EPSG:4326** (WGS84), which is commonly used for web mapping applications. This ensures that both images are in the same CRS, which is a requirement for alignment.
+* In this project, the images are reprojected using the `rasterio` library. We use the `calculate_default_transform` function to transform the images to the EPSG:4326 CRS.
+
+### **Image Clipping**:
+
+* **Clipping** is the process of cutting the images to a specific **Area of Interest (AOI)**, which is provided by the user in the request. Currently, only rectangular AOIs are supported.
+* The `shapely.geometry` library is used to create a bounding box for the specified AOI, and the `rasterio.mask.mask` function is used to clip the images to that bounding box.
+
+### **Image Alignment**:
+
+* **Image Alignment** involves aligning the two images so that they match spatially. This is done using **cross-correlation**, which is a technique to identify the shift between two images.
+* We use the `skimage.registration.phase_cross_correlation` function to compute the pixel shift between the images. The shift is then applied to one of the images using **affine transformation**, so that both images are aligned.
+
+---
+
+## Worker Service
+
+The backend worker service polls for jobs (image processing requests) and processes them in the background. Each job involves the following steps:
+
+1. Reproject the images to EPSG:4326.
+2. Clip the images to the specified AOI.
+3. Align the images based on cross-correlation.
+4. Save the output and update the job status.
+
+The worker service runs in a background thread and constantly checks for new jobs. Once a job is completed, the output is made available at the specified URL.
+
+---
+
+## Development Notes
+
+* To run the application in **development mode**, you can use the following commands for the UI and backend separately:
+
+  For UI:
+
+  ```bash
+  cd ui
+  npm start
+  ```
+
+  For backend:
+
+  ```bash
+  uvicorn main:app --reload
+  ```
+
+* You can also run the backend using `docker-compose` to ensure consistency across environments:
+
+  ```bash
+  docker-compose up --build backend
+  ```
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
