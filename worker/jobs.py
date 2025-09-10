@@ -3,7 +3,7 @@ import uuid
 from fastapi import UploadFile
 from typing import Dict
 from pathlib import Path
-from .config import JOBS_FILE, OUT_FILE
+from config import JOBS_FILE, OUT_FILE
 
 def load_jobs() -> Dict:
     if JOBS_FILE.exists():

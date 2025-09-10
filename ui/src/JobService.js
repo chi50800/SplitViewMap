@@ -1,7 +1,7 @@
 // JobService.js
 // Functions to interact with backend job APIs
 
-const API_BASE = "http://127.0.0.1:8000"; // change to your Python server address
+const API_BASE = process.env.REACT_APP_API_URL || "http://0.0.0.0:8000"; // change to your Python server address
 
 /**
  * Create a new processing job

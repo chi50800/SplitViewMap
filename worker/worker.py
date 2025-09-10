@@ -1,8 +1,8 @@
 import time
-from .jobs import load_jobs, save_jobs
-from .processor import reproject_to_epsg4326, clip_image, align_images
+from jobs import load_jobs, save_jobs
+from processor import reproject_to_epsg4326, clip_image, align_images
 from pathlib import Path
-from .config import OUT_FILE, SERVER_URL
+from config import OUT_FILE, SERVER_URL
 import traceback
 
 def process_job(job_id, job):

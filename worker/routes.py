@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, Form, HTTPException
-from .jobs import create_job, load_jobs
+from jobs import create_job, load_jobs
 
 router = APIRouter()
 

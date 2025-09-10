@@ -3,13 +3,13 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routes import router
-from app.worker import worker_loop
+from routes import router
+from worker import worker_loop
 
 app = FastAPI(title="Raster Job Service")
 
 # CORS
-origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+origins = ["http://localhost:3000", "http://127.0.0.1:3000", "http://ui:3000"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -34,4 +34,4 @@ def on_startup():
     start_worker()
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

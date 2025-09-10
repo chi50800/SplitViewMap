@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  ui:
+    build: ./ui
+    ports:
+      - "3000:80"       # React app available on http://localhost:3000
+    depends_on:
+      - worker
+    environment:
+      - REACT_APP_API_URL=http://worker:8000
+
+  worker:
+    build: ./worker
+    ports:
+      - "8000:8000"     # Python backend API
+    volumes:
+      - ./worker/uploads:/app/uploads
+      - ./worker/previews:/app/previews
+      - ./worker/output:/app/output
